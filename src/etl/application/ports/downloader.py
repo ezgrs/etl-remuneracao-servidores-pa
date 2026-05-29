@@ -1,0 +1,6 @@
+import typing
+
+
+class Downloader(typing.Protocol):
+    async def download_html(self, url: str) -> str: ...
+    async def download_file(self, url: str) -> bytes: ...
