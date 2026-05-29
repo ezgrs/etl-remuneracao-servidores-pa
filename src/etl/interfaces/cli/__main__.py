@@ -3,7 +3,7 @@ import datetime
 import typing
 
 import aiopath
-import click
+import asyncclick as click
 import httpx
 
 from etl.application.ports.exporter import Exporter
