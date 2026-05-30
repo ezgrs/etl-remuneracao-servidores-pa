@@ -36,11 +36,11 @@ async def crawl(
         pdfs_urls = html_parser.parse_pdfs_urls(date_page_html)
         for pdf_url in pdfs_urls:
             try:
-                await downloader.download_file(
+                pdf_contents = await downloader.download_file(
                     pdf_url.replace("http://", "https://")
                 )
-            except Exception as e:
-                print(e)
+            except Exception:
                 continue
-            # records = pdf_parser.parse(pdf_contents)
-            # await exporter.write(date, records)
+
+            records = pdf_parser.parse(pdf_contents)
+            await exporter.write(date, records)
