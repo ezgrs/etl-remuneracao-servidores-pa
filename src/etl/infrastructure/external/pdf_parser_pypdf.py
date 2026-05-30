@@ -17,8 +17,12 @@ class PyPdfPdfParser(PdfParser):
         self.departments = departments
 
     def parse(self, contents: bytes) -> list[Registro]:
-        arg0_text = '|'.join(re.escape(department) for department in sorted(self.departments))
-        row_pattern = re.compile(fr'^({arg0_text}) ([A-Z0\' ]+?) (Com Vínculo|Sem Vínculo) ([A-ZÇÉÊÃÕÚe \/\-0-9.,]+?) ([\(\)0-9.,]+)')
+        arg0_text = "|".join(
+            re.escape(department) for department in sorted(self.departments)
+        )
+        row_pattern = re.compile(
+            rf"^({arg0_text}) ([A-Z0\' ]+?) (Com Vínculo|Sem Vínculo) ([A-ZÇÉÊÃÕÚe \/\-0-9.,]+?) ([\(\)0-9.,]+)"
+        )
 
         reader = pypdf.PdfReader(io.BytesIO(contents))
         for page in reader.pages:
@@ -37,23 +41,27 @@ class PyPdfPdfParser(PdfParser):
 
             page.extract_text(visitor_text=visitor_text)
             for _, items in groups.items():
-                value = ' '.join(value for item in items if (value := item[1].strip()))
+                value = " ".join(
+                    value for item in items if (value := item[1].strip())
+                )
                 match value:
-                    case '':
+                    case "":
                         continue
-                    case 'GOVERNO DO ESTADO DO PARÁ':
+                    case "GOVERNO DO ESTADO DO PARÁ":
                         continue
-                    case 'SECRETARIA DE ESTADO DE PLANEJAMENTO E ADMINISTRAÇÃO':
+                    case "SECRETARIA DE ESTADO DE PLANEJAMENTO E ADMINISTRAÇÃO":
                         continue
-                    case 'DEMONSTRATIVO DE REMUNERAÇÃO DE PESSOAL - PODER EXECUTIVO':
+                    case "DEMONSTRATIVO DE REMUNERAÇÃO DE PESSOAL - PODER EXECUTIVO":
                         continue
-                    case str() if value.startswith("Fonte: SIGIRH/") : # 'Fonte: SIGIRH/XXXXXX de XXXX - Parte X/X - V.X'
+                    case str() if value.startswith(
+                        "Fonte: SIGIRH/"
+                    ):  # 'Fonte: SIGIRH/XXXXXX de XXXX - Parte X/X - V.X'
                         continue
-                    case 'Órgão Nome Vínculo Cargo/Função Retroativos Férias':
+                    case "Órgão Nome Vínculo Cargo/Função Retroativos Férias":
                         continue
-                    case 'Remuneração Adiantamento Aux Aliment Redutor Imposto de Renda Outros Valor':
+                    case "Remuneração Adiantamento Aux Aliment Redutor Imposto de Renda Outros Valor":
                         continue
-                    case 'Base 13º Salário Aux Transp Constitucional Previdência Descontos Líquido':
+                    case "Base 13º Salário Aux Transp Constitucional Previdência Descontos Líquido":
                         continue
 
                 assert row_pattern.match(value), f"invalid header ({value=})"

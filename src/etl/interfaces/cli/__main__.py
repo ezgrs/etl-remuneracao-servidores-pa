@@ -111,7 +111,11 @@ async def main(
         pdf_parser: PdfParser
         match pdf_parser_type:
             case "pypdf":
-                pdf_parser = PyPdfPdfParser(departments=await load_canonical_departments(downloader=downloader)) 
+                pdf_parser = PyPdfPdfParser(
+                    departments=await load_canonical_departments(
+                        downloader=downloader
+                    )
+                )
 
         await crawl(
             downloader=downloader,
