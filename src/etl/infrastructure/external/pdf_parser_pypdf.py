@@ -11,25 +11,14 @@ from etl.domain.entities.registro import Registro
 
 
 class PyPdfPdfParser(PdfParser):
+    departments: typing.Iterable[str]
+
+    def __init__(self, *, departments: typing.Iterable[str]) -> None:
+        self.departments = departments
+
     def parse(self, contents: bytes) -> list[Registro]:
-        # SEJU -> SEJUDH
-        # SEOP -> SEDOP
-        #      -> PME
-        # PCPA -> PC
-        #      -> NGPM
-        # IOEPA -> IOE
-        # IMETROPARÁ -> IMETROPARA
-        # IGEPPS -> IGEPREV
-        # IDEFLOR-BIO -> IDEFLORBIO
-        # GABVICE -> GAB/VICE
-        # FSCMPA -> FSCMP
-        # FPARÁPAZ -> FPROPAZ
-        #      -> ENCARGOS
-        # DETRAN/PA -> DETRAN
-        # CBM/PA -> CBM
-        # CASA MILITAR -> CASA MILIT
-        # ADEPARÁ -> ADEPARA
-        row_pattern = re.compile(r'^(ADEPARA|ARCON|ARTRAN|CASA CIVIL|CASA MILIT|CBM|CEASA|CGE|CODEC|COHAB|CPH|DETRAN|EGPA|EMATER|ENCARGOS|FADEP|FAPESPA|FASEPA|FCG|FCP|FHCGV|FPROPAZ|FSCMP|FUNTELPA|GAB\/VICE|HEMOPA|HOL|IASEP|IDEFLORBIO|IGEPREV|IMETROPARA|IOE|ITERPA|JUCEPA|NGPM|NGPR|NGTM|PC|PCEPA|PGE|PME|PRODEPA|SEAC|SEAF|SEAP|SEASTER|SECIR|SECOM|SECTET|SECULT|SEDAP|SEDEME|SEDOP|SEDUC|SEEL|SEFA|SEGUP|SEINFRA|SEIRDH|SEJUDH|SEMAS|SEMU|SEPI|SEPLAD|SESPA|SETUR|UEPA) ([A-Z0\' ]+?) (Com Vínculo|Sem Vínculo) ([A-ZÇÉÊÃÕÚe \/\-0-9.,]+?) ([\(\)0-9.,]+)')
+        arg0_text = '|'.join(re.escape(department) for department in sorted(self.departments))
+        row_pattern = re.compile(fr'^({arg0_text}) ([A-Z0\' ]+?) (Com Vínculo|Sem Vínculo) ([A-ZÇÉÊÃÕÚe \/\-0-9.,]+?) ([\(\)0-9.,]+)')
 
         reader = pypdf.PdfReader(io.BytesIO(contents))
         for page in reader.pages:

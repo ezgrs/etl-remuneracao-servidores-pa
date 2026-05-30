@@ -1,9 +1,11 @@
 import datetime
+import typing
 
 from etl.application.ports.downloader import Downloader
 from etl.application.ports.exporter import Exporter
 from etl.application.ports.html_parser import HtmlParser
 from etl.application.ports.pdf_parser import PdfParser
+from etl.infrastructure.external.pdf_parser_pypdf import PyPdfPdfParser
 
 
 async def crawl(
@@ -44,3 +46,32 @@ async def crawl(
 
             records = pdf_parser.parse(pdf_contents)
             await exporter.write(date, records)
+
+
+async def load_canonical_departments(
+    *,
+    downloader: Downloader,
+    url: str = "https://ptp-api-dados.sistemas.pa.gov.br/organizacoes",
+) -> typing.Iterable[str]:
+    records = await downloader.download_json(url)
+    mapping = {
+        # API -> SIGIRH
+        "SEJU": "SEJUDH",
+        "SEOP": "SEDOP",
+        "PCPA": "PC",
+        "IOEPA": "IOE",
+        "IMETROPARÁ": "IMETROPARA",
+        "IGEPPS": "IGEPREV",
+        "IDEFLOR-BIO": "IDEFLORBIO",
+        "GABVICE": "GAB/VICE",
+        "FSCMPA": "FSCMP",
+        "FPARÁPAZ": "FPROPAZ",
+        "DETRAN/PA": "DETRAN",
+        "CBM/PA": "CBM",
+        "CASA MILITAR": "CASA MILIT",
+        "ADEPARÁ": "ADEPARA",
+    }
+    siglas = [record["sigla"] for record in records]
+    siglas = [mapping.get(sigla, sigla) for sigla in siglas]
+    siglas = [*siglas, "NGPM", "PME", "ENCARGOS"]
+    return siglas
