@@ -51,7 +51,7 @@ async def crawl(
 async def load_canonical_departments(
     *,
     downloader: Downloader,
-    url: str = "https://ptp-api-dados.sistemas.pa.gov.br/organizacoes",
+    url: str = "https://ptp-api-dados.sistemas.pa.gov.br/organizacoes/superiores",
 ) -> typing.Iterable[str]:
     records = await downloader.download_json(url)
     mapping = {
