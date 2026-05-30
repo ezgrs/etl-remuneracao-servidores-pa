@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import typing
 
 from etl.application.ports.downloader import Downloader
 
@@ -21,3 +22,7 @@ class DelayedDownloader(Downloader):
     async def download_file(self, url: str) -> bytes:
         await asyncio.sleep(self.delay.total_seconds())
         return await self.downloader.download_file(url)
+    
+    async def download_json(self, url: str) -> typing.Any:
+        await asyncio.sleep(self.delay.total_seconds())
+        return await self.downloader.download_json(url)

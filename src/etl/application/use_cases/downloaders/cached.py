@@ -1,4 +1,6 @@
 import hashlib
+import json
+import typing
 
 import aiopath
 
@@ -43,4 +45,17 @@ class CachedDownloader(Downloader):
 
         data = await self.downloader.download_file(url)
         await file_path.write_bytes(data)
+        return data
+
+    async def download_json(self, url: str) -> typing.Any:
+        await self._ensure_dir()
+
+        file_path = self.path / f"json_{self._key(url)}"
+
+        if await file_path.exists():
+            data = await file_path.read_text(encoding="utf-8")
+            return json.loads(data)
+
+        data = await self.downloader.download_json(url)
+        await file_path.write_text(json.dumps(data), encoding="utf-8")
         return data

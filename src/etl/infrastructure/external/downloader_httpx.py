@@ -1,3 +1,5 @@
+import typing
+
 from etl.application.ports.downloader import Downloader
 
 
@@ -17,3 +19,8 @@ class HttpxDownloader(Downloader):
         response = await self._client.get(url)
         response.raise_for_status()
         return response.content
+
+    async def download_json(self, url: str) -> typing.Any:
+        response = await self._client.get(url)
+        response.raise_for_status()
+        return response.json()
