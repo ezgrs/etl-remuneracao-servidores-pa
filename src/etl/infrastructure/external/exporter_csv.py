@@ -12,6 +12,9 @@ from etl.domain.value_objects.tipo_vinculo import TipoVinculo
 class CsvExporter(Exporter):
     path: aiopath.AsyncPath
 
+    def __init__(self, *, path: aiopath.AsyncPath):
+        self.path = path
+
     async def write(
         self,
         date: datetime.date,
