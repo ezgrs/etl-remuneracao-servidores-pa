@@ -1,4 +1,5 @@
 import csv
+import decimal
 import io
 import pprint
 import re
@@ -8,6 +9,10 @@ import pypdf
 
 from etl.application.ports.pdf_parser import PdfParser
 from etl.domain.entities.registro import Registro
+from etl.domain.entities.remuneracao import Remuneracao
+from etl.domain.entities.servidor import Servidor
+from etl.domain.entities.vinculo import Vinculo
+from etl.domain.value_objects.tipo_vinculo import TipoVinculo
 
 
 class PyPdfPdfParser(PdfParser):
@@ -21,8 +26,10 @@ class PyPdfPdfParser(PdfParser):
             re.escape(department) for department in sorted(self.departments)
         )
         row_pattern = re.compile(
-            rf"^({arg0_text}) ([A-Z0\' ]+?) (Com Vínculo|Sem Vínculo) ([A-ZÇÉÊÃÕÚe \/\-0-9.,]+?) ([\(\)0-9.,]+)"
+            rf"^({arg0_text}) ([A-Z0\' ]+?) (Com Vínculo|Sem Vínculo) ([A-ZÇÉÊÃÕÚe \/\-0-9.,]+?) (\(?[0-9.]+,[0-9]{2}\)?).*?([0-9.]+,[0-9.]{2})$"
         )
+
+        registros: list[Registro] = []
 
         reader = pypdf.PdfReader(io.BytesIO(contents))
         for page in reader.pages:
@@ -64,6 +71,38 @@ class PyPdfPdfParser(PdfParser):
                     case "Base 13º Salário Aux Transp Constitucional Previdência Descontos Líquido":
                         continue
 
-                assert row_pattern.match(value), f"invalid header ({value=})"
+                match = row_pattern.match(value)
+                assert match, f"invalid header ({value=})"
+                (
+                    orgao,
+                    nome,
+                    dc_tipo_vinculo,
+                    ocupacao,
+                    salario_bruto,
+                    salario_liquido,
+                ) = match.groups()
+                registros.append(
+                    Registro(
+                        servidor=Servidor(nome=nome),
+                        vinculo=Vinculo(
+                            orgao=orgao,
+                            ocupacao=ocupacao,
+                            tipo={
+                                "Com Vínculo": TipoVinculo.EMPREGATICIO,
+                                "Sem Vínculo": TipoVinculo.NAO_EMPREGATICIO,
+                            }[dc_tipo_vinculo],
+                        ),
+                        remuneracao=Remuneracao(
+                            valor_bruto=decimal.Decimal(
+                                salario_bruto.replace(".", "").replace(",", ".")
+                            ),
+                            valor_liquido=decimal.Decimal(
+                                salario_liquido.replace(".", "").replace(
+                                    ",", "."
+                                )
+                            ),
+                        ),
+                    )
+                )
 
-        return []
+        return registros
