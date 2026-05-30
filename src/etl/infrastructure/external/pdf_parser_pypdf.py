@@ -26,7 +26,7 @@ class PyPdfPdfParser(PdfParser):
             re.escape(department) for department in sorted(self.departments)
         )
         row_pattern = re.compile(
-            rf"^({arg0_text}) ([A-Z0\' ]+?) (Com Vínculo|Sem Vínculo) ([A-ZÇÉÊÃÕÚe \/\-0-9.,]+?) (\(?[0-9.]+,[0-9]{2}\)?).*?([0-9.]+,[0-9.]{2})$"
+            r"^(" + arg0_text + r") ([A-Z0\' ]+?) (Com Vínculo|Sem Vínculo) ([A-ZÇÉÊÃÕÚe \/\-0-9.,]+?) (\(?[0-9.]+,[0-9]{2}\)?).*?([0-9.]+,[0-9.]{2})$"
         )
 
         registros: list[Registro] = []
