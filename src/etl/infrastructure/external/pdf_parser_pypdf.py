@@ -68,6 +68,8 @@ class PyPdfPdfParser(PdfParser):
                         continue
                     case "Remuneração Adiantamento Aux Aliment Redutor Imposto de Renda Outros Valor":
                         continue
+                    case "Remuneração  Adiantamento  Aux Aliment  Redutor  Imposto de Renda  Outros  Valor":
+                        continue
                     case "Base 13º Salário Aux Transp Constitucional Previdência Descontos Líquido":
                         continue
 
