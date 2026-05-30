@@ -57,5 +57,7 @@ class CachedDownloader(Downloader):
             return json.loads(data)
 
         data = await self.downloader.download_json(url)
-        await file_path.write_text(json.dumps(data), encoding="utf-8")
+        await file_path.write_text(
+            json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
         return data
