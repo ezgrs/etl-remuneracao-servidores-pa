@@ -5,7 +5,7 @@ import aiocsv
 
 from etl.application.ports.exporter import Exporter
 from etl.domain.entities.registro import Registro
-from etl.domain.value_objects.tipo_vinculo import TipoVinculo
+from etl.domain.enums.tipo_vinculo import TipoVinculo
 
 
 class CsvExporter(Exporter):

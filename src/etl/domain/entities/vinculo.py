@@ -1,6 +1,6 @@
 import dataclasses
 
-from etl.domain.value_objects.tipo_vinculo import TipoVinculo
+from etl.domain.enums.tipo_vinculo import TipoVinculo
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)

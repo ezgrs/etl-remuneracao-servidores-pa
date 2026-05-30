@@ -1,7 +1,5 @@
-import csv
 import decimal
 import io
-import pprint
 import re
 import typing
 
@@ -12,7 +10,7 @@ from etl.domain.entities.registro import Registro
 from etl.domain.entities.remuneracao import Remuneracao
 from etl.domain.entities.servidor import Servidor
 from etl.domain.entities.vinculo import Vinculo
-from etl.domain.value_objects.tipo_vinculo import TipoVinculo
+from etl.domain.enums.tipo_vinculo import TipoVinculo
 
 
 class PyPdfPdfParser(PdfParser):
