@@ -1,3 +1,4 @@
+import datetime
 import decimal
 import io
 import re
@@ -5,6 +6,7 @@ import typing
 
 import pypdf
 
+from etl.application.ports.exporter import Exporter
 from etl.application.ports.pdf_parser import PdfParser
 from etl.domain.entities.registro import Registro
 from etl.domain.entities.remuneracao import Remuneracao
@@ -14,12 +16,16 @@ from etl.domain.enums.tipo_vinculo import TipoVinculo
 
 
 class PyPdfPdfParser(PdfParser):
+    exporter: Exporter
     departments: typing.Iterable[str]
 
-    def __init__(self, *, departments: typing.Iterable[str]) -> None:
+    def __init__(
+        self, *, exporter: Exporter, departments: typing.Iterable[str]
+    ) -> None:
+        self.exporter = exporter
         self.departments = departments
 
-    def parse(self, contents: bytes) -> list[Registro]:
+    async def parse(self, date: datetime.date, contents: bytes) -> None:
         arg0_text = "|".join(
             re.escape(department) for department in sorted(self.departments)
         )
@@ -28,8 +34,6 @@ class PyPdfPdfParser(PdfParser):
             + arg0_text
             + r") ([A-Z0\' ]+?) (Com Vínculo|Sem Vínculo) ([A-ZÇÉÊÃÕÚe \/\-0-9.,]+?) (\(?[0-9.]+,[0-9]{2}\)?).*?([0-9.]+,[0-9.]{2})$"
         )
-
-        registros: list[Registro] = []
 
         reader = pypdf.PdfReader(io.BytesIO(contents))
         for page in reader.pages:
@@ -47,6 +51,7 @@ class PyPdfPdfParser(PdfParser):
                 groups.setdefault(y, []).append((x, text))
 
             page.extract_text(visitor_text=visitor_text)
+
             for _, items in groups.items():
                 value = " ".join(
                     value for item in items if (value := item[1].strip())
@@ -83,7 +88,8 @@ class PyPdfPdfParser(PdfParser):
                     salario_bruto,
                     salario_liquido,
                 ) = match.groups()
-                registros.append(
+                await self.exporter.write(
+                    date,
                     Registro(
                         servidor=Servidor(nome=nome.strip()),
                         vinculo=Vinculo(
@@ -107,7 +113,5 @@ class PyPdfPdfParser(PdfParser):
                                 )
                             ),
                         ),
-                    )
+                    ),
                 )
-
-        return registros

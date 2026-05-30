@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import datetime
 import typing
 
@@ -45,6 +46,25 @@ class ObjectType[T](click.ParamType):
     @typing.override
     def get_metavar(self, param: click.Parameter, ctx: click.Context):
         return f"[{'|'.join(self.mapping)}]"
+
+
+@contextlib.asynccontextmanager
+async def _create_exporter(
+    output_dir: aiopath.AsyncPath | None, exporter_type: typing.Literal["csv"]
+) -> typing.AsyncIterator[Exporter]:
+    exporter: Exporter
+    if output_dir is None:
+        exporter = NullExporter()
+    else:
+        match exporter_type:
+            case "csv":
+                exporter = CsvExporter(path=output_dir / "output.csv")
+
+    await exporter.set_up()
+    try:
+        yield exporter
+    finally:
+        await exporter.tear_down()
 
 
 @click.command()
@@ -102,14 +122,6 @@ async def main(
     pdf_parser_type: typing.Literal["pypdf"],
     exporter_type: typing.Literal["csv"],
 ) -> None:
-    exporter: Exporter
-    if output_dir is None:
-        exporter = NullExporter()
-    else:
-        match exporter_type:
-            case "csv":
-                exporter = CsvExporter(path=output_dir / "output.csv")
-
     async with httpx.AsyncClient(
         follow_redirects=True,
         timeout=None,
@@ -126,21 +138,24 @@ async def main(
                 path=cache_dir,
             )
 
-        pdf_parser: PdfParser
-        match pdf_parser_type:
-            case "pypdf":
-                pdf_parser = PyPdfPdfParser(
-                    departments=await load_canonical_departments(
-                        downloader=downloader
+        async with _create_exporter(
+            output_dir, exporter_type=exporter_type
+        ) as exporter:
+            pdf_parser: PdfParser
+            match pdf_parser_type:
+                case "pypdf":
+                    pdf_parser = PyPdfPdfParser(
+                        exporter=exporter,
+                        departments=await load_canonical_departments(
+                            downloader=downloader
+                        ),
                     )
-                )
 
-        await crawl(
-            downloader=downloader,
-            html_parser=html_parser,
-            pdf_parser=pdf_parser,
-            exporter=exporter,
-        )
+            await crawl(
+                downloader=downloader,
+                html_parser=html_parser,
+                pdf_parser=pdf_parser,
+            )
 
 
 if __name__ == "__main__":

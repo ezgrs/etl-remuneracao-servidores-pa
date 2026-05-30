@@ -1,11 +1,27 @@
+import asyncio
 import datetime
 import typing
 
 from etl.application.ports.downloader import Downloader
-from etl.application.ports.exporter import Exporter
 from etl.application.ports.html_parser import HtmlParser
 from etl.application.ports.pdf_parser import PdfParser
-from etl.infrastructure.external.pdf_parser_pypdf import PyPdfPdfParser
+
+
+async def _parse_pdf(
+    date: datetime.date,
+    url: str,
+    *,
+    downloader: Downloader,
+    pdf_parser: PdfParser,
+) -> None:
+    try:
+        pdf_contents = await downloader.download_file(
+            url.replace("http://", "https://")
+        )
+    except Exception:
+        return
+
+    await pdf_parser.parse(date, pdf_contents)
 
 
 async def crawl(
@@ -13,7 +29,6 @@ async def crawl(
     downloader: Downloader,
     html_parser: HtmlParser,
     pdf_parser: PdfParser,
-    exporter: Exporter,
     url: str = "https://www.seplad.pa.gov.br/remuneracao-de-servidores/",
     min_date: datetime.date | None = None,
     max_date: datetime.date | None = None,
@@ -36,16 +51,17 @@ async def crawl(
             date_url.replace("http://", "https://")
         )
         pdfs_urls = html_parser.parse_pdfs_urls(date_page_html)
-        for pdf_url in pdfs_urls:
-            try:
-                pdf_contents = await downloader.download_file(
-                    pdf_url.replace("http://", "https://")
+        await asyncio.gather(
+            *(
+                _parse_pdf(
+                    date,
+                    pdf_url,
+                    downloader=downloader,
+                    pdf_parser=pdf_parser,
                 )
-            except Exception:
-                continue
-
-            records = pdf_parser.parse(pdf_contents)
-            await exporter.write(date, records)
+                for pdf_url in pdfs_urls
+            )
+        )
 
 
 async def load_canonical_departments(
