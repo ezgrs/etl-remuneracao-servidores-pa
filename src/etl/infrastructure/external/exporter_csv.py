@@ -33,7 +33,7 @@ class CsvExporter(Exporter):
                         TipoVinculo.EMPREGATICIO: "Com vínculo",
                         TipoVinculo.NAO_EMPREGATICIO: "Sem vínculo",
                     }[record.vinculo.tipo],
-                    record.vinculo.orgao,
+                    record.vinculo.ocupacao,
                     record.remuneracao.valor_bruto,
                     record.remuneracao.valor_liquido,
                 ]
