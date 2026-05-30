@@ -9,7 +9,6 @@ class HttpxDownloader(Downloader):
         self._client = client
 
     async def download_html(self, url: str) -> str:
-        print(url)
         response = await self._client.get(url)
         response.raise_for_status()
         return response.text
