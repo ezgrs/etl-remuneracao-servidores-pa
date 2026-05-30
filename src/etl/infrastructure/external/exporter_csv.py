@@ -1,9 +1,42 @@
-from datetime import date
+import csv
+import datetime
+import io
+
+import aiopath
 
 from etl.application.ports.exporter import Exporter
 from etl.domain.entities.registro import Registro
+from etl.domain.value_objects.tipo_vinculo import TipoVinculo
 
 
 class CsvExporter(Exporter):
-    async def write(self, date: date, records: list[Registro]) -> None:
-        return
+    path: aiopath.AsyncPath
+
+    async def write(
+        self,
+        date: datetime.date,
+        records: list[Registro],
+    ) -> None:
+        buffer = io.StringIO()
+
+        writer = csv.writer(buffer, delimiter=";")
+        writer.writerows(
+            [
+                [
+                    date.strftime("%m/%Y"),
+                    record.vinculo.orgao,
+                    record.servidor.nome,
+                    {
+                        TipoVinculo.EMPREGATICIO: "Com vínculo",
+                        TipoVinculo.NAO_EMPREGATICIO: "Sem vínculo",
+                    }[record.vinculo.tipo],
+                    record.vinculo.orgao,
+                    record.remuneracao.valor_bruto,
+                    record.remuneracao.valor_liquido,
+                ]
+                for record in records
+            ]
+        )
+
+        async with self.path.open("a", encoding="utf-8", newline="") as f:
+            await f.write(buffer.getvalue())
