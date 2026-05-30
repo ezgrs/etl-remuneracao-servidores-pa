@@ -83,7 +83,7 @@ class PyPdfPdfParser(PdfParser):
                 ) = match.groups()
                 registros.append(
                     Registro(
-                        servidor=Servidor(nome=nome),
+                        servidor=Servidor(nome=nome.strip()),
                         vinculo=Vinculo(
                             orgao=orgao,
                             ocupacao=ocupacao,
