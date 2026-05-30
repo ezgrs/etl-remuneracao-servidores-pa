@@ -14,6 +14,7 @@ from etl.application.use_cases.downloaders.cached import CachedDownloader
 from etl.application.use_cases.downloaders.delayed import DelayedDownloader
 from etl.infrastructure.external.downloader_httpx import HttpxDownloader
 from etl.infrastructure.external.exporter_csv import CsvExporter
+from etl.infrastructure.external.exporter_null import NullExporter
 from etl.infrastructure.external.html_parser_bs4 import Bs4HtmlParser
 from etl.infrastructure.external.pdf_parser_pypdf import PyPdfPdfParser
 
@@ -56,11 +57,19 @@ class ObjectType[T](click.ParamType):
 )
 @click.option(
     "--format",
-    "exporter",
-    type=ObjectType({"csv": CsvExporter()}),
+    "exporter_type",
+    type=click.Choice(["csv"]),
     default="csv",
     show_default=True,
     help="Output format.",
+)
+@click.option(
+    "--output-dir",
+    type=click.Path(
+        path_type=aiopath.AsyncPath, file_okay=False, dir_okay=True
+    ),
+    default=None,
+    help="Output directory.",
 )
 @click.option(
     "--cache-dir",
@@ -88,10 +97,19 @@ class ObjectType[T](click.ParamType):
 async def main(
     delay: int,
     cache_dir: aiopath.AsyncPath | None,
+    output_dir: aiopath.AsyncPath | None,
     html_parser: HtmlParser,
     pdf_parser_type: typing.Literal["pypdf"],
-    exporter: Exporter,
+    exporter_type: typing.Literal["csv"],
 ) -> None:
+    exporter: Exporter
+    if output_dir is None:
+        exporter = NullExporter()
+    else:
+        match exporter_type:
+            case "csv":
+                exporter = CsvExporter(path=output_dir / "output.csv")
+
     async with httpx.AsyncClient(
         follow_redirects=True,
         timeout=None,
