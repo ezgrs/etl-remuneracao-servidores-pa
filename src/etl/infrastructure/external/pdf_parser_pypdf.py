@@ -96,7 +96,10 @@ class PyPdfPdfParser(PdfParser):
                         ),
                         remuneracao=Remuneracao(
                             valor_bruto=decimal.Decimal(
-                                salario_bruto.replace(".", "").replace(",", ".")
+                                salario_bruto.replace(".", "")
+                                .replace(",", ".")
+                                .removeprefix("(")
+                                .removesuffix(")")
                             ),
                             valor_liquido=decimal.Decimal(
                                 salario_liquido.replace(".", "").replace(
