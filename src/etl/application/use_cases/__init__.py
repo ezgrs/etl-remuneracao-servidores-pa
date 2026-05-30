@@ -73,5 +73,5 @@ async def load_canonical_departments(
     }
     siglas = [record["sigla"] for record in records]
     siglas = [mapping.get(sigla, sigla) for sigla in siglas]
-    siglas = [*siglas, "NGPM", "PME", "ENCARGOS"]
+    siglas = [*siglas, "NGPM", "PME", "ENCARGOS", "DEF. PUB."]
     return siglas
